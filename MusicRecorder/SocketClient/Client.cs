@@ -1,12 +1,9 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Net.Sockets;
-using UnityEngine.Networking;
+﻿using System.Net.Sockets;
 using System.IO;
 using System.Net;
+using Newtonsoft.Json;
 
-
-public interface ClientHandler {
+public interface IClientHandler {
 	void OnLogin (bool result, string userId, string message);
 	void OnLogout(string message);
 	void OnRoomFound(int roomId, string name, Packets.ClientInfo[] userIds);
@@ -18,12 +15,13 @@ public interface ClientHandler {
 public class Client {
 
 	private TcpClient mClient = null;
-	private ClientHandler mHandler = null;
+	private IClientHandler mHandler = null;
 	private BinaryWriter mStreamWriter = null;
 	private BinaryReader mStreamReader = null;
 
-	public Client(ClientHandler handler){
+	public Client(IClientHandler handler){
 		mClient = new TcpClient ();
+        
 		mHandler = handler;
 	}
 
@@ -38,18 +36,19 @@ public class Client {
 		}
 	}
 
-	public void Login (string hostname, int port, string userId, string firstName, string lastName, string pictureUrl) {		
+	public async  void Login (string hostname, int port, string userId, string firstName, string lastName, string pictureUrl) {		
 		try {
-			mClient.Connect (hostname, port);
-			if (mClient.Connected) {				
-				mStreamWriter = new BinaryWriter(mClient.GetStream ());
-				mStreamReader = new BinaryReader(mClient.GetStream ());
-				WritePacket (OpCode.Login, new Packets.Login (){userId = userId, firstName = firstName, lastName = lastName, pictureUrl = pictureUrl});
-			} else {				
-				mHandler.OnLogout ("Timed out");
-			}
-		} catch (SocketException exception) {
-			Debug.LogError (exception.ToString());
+            
+
+            await mClient.ConnectAsync (hostname, port);
+            while (!mClient.Connected)
+            {
+                //sleep
+            }
+            mStreamWriter = new BinaryWriter(mClient.GetStream());
+            mStreamReader = new BinaryReader(mClient.GetStream());
+            WritePacket(OpCode.Login, new Packets.Login() { userId = userId, firstName = firstName, lastName = lastName, pictureUrl = pictureUrl });
+        } catch (SocketException exception) {
 			mHandler.OnLogout (exception.Message);
 		}
 	}
@@ -69,12 +68,18 @@ public class Client {
 		}
 	}
 
-	private void WritePacket(OpCode code, object o){
+    public void SendNotification(object o)
+    {
+        if (mClient.Connected)
+        {
+            WritePacket(OpCode.Notification, o);
+        }
+    }
+    private void WritePacket(OpCode code, object o){
 		int opCode = (int)code;
-		string payload = JsonUtility.ToJson (o);
+		string payload = JsonConvert.SerializeObject (o);
 		int size = payload.Length + 4;
 
-		Debug.Log("Writing packet " + opCode + ":" + payload); 
 		mStreamWriter.Write (IPAddress.HostToNetworkOrder (size));
 		mStreamWriter.Write (IPAddress.HostToNetworkOrder (opCode));
 		mStreamWriter.Write (System.Text.Encoding.UTF8.GetBytes(payload));
@@ -82,27 +87,25 @@ public class Client {
 	}
 
 	private void HandlePacket(OpCode opCode, string payload) {	
-		Debug.Log("Recv packet " + opCode + ":" + payload);	
 		switch (opCode) {
 		case OpCode.LoginResult:
-			Packets.LoginResult loginResult = JsonUtility.FromJson<Packets.LoginResult> (payload);
+			Packets.LoginResult loginResult = JsonConvert.DeserializeObject<Packets.LoginResult> (payload);
 			mHandler.OnLogin (loginResult.status, loginResult.userId, loginResult.message);
 			break;
 		case OpCode.RoomFound:
-			Packets.RoomFound roomFound = JsonUtility.FromJson<Packets.RoomFound> (payload);
+			Packets.RoomFound roomFound = JsonConvert.DeserializeObject<Packets.RoomFound> (payload);
 			mHandler.OnRoomFound (roomFound.roomId, roomFound.roomName, roomFound.clients);
 			break;
 		case OpCode.BroadcastMessage:
-			Message m = JsonUtility.FromJson<Message> (payload);
+			Message m = JsonConvert.DeserializeObject<Message> (payload);
 			mHandler.OnMessage (m.name, payload);
 			break;
 		case OpCode.Error:
-			Packets.Error error = JsonUtility.FromJson<Packets.Error> (payload);
+			Packets.Error error = JsonConvert.DeserializeObject<Packets.Error> (payload);
 			mHandler.OnError (error.message);
 			mHandler.OnLogout (error.message);
 			break;
 		default:
-			Debug.Log ("Unhandled packet:" + payload);
 			break;
 		}
 

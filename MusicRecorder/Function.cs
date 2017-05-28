@@ -6,6 +6,7 @@ using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Amazon.Lambda.Core;
+using MusicRecorder.SocketClient;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -28,11 +29,68 @@ namespace MusicRecorder
                 switch (intentRequest.Intent.Name)
                 {
                     case "StartRecording":
-                        return MakeSkillResponse("Recording Started", true);
+                        try
+                        {
+                            ClientHandler handler = new ClientHandler("StartRecording");
+                            var client = new Client(handler);
+                            handler.SetClient(client);
+
+
+                            client.Login("ec2-52-212-215-99.eu-west-1.compute.amazonaws.com", 8080, "1234", "Indy", "G", "");
+                            while (!handler.HasSentNotification() && !handler.HasError())
+                            {
+                                client.Update();
+                            }
+
+
+                            return MakeSkillResponse("Recording Started", true);
+                        }
+                        catch(Exception e)
+                        {
+                            return MakeSkillResponse("Something has gone wrong." + e.Message,true);
+                        }
                     case "StopRecording":
-                        return MakeSkillResponse("Recording Stopped",true);
+                        try
+                        {
+                            ClientHandler handler = new ClientHandler("StopRecording");
+                            var client = new Client(handler);
+                            handler.SetClient(client);
+
+
+                            client.Login("ec2-52-212-215-99.eu-west-1.compute.amazonaws.com", 8080, "1234", "Indy", "G", "");
+                            while (!handler.HasSentNotification() && !handler.HasError())
+                            {
+                                client.Update();
+                            }
+
+                            return MakeSkillResponse("Recording Stopped", true);
+                        }
+                        catch (Exception e)
+                        {
+                            return MakeSkillResponse("Something has gone wrong." + e.Message, true);
+                        }
+                        
                     case "PlaybackRecording":
-                        return MakeSkillResponse("Playing back the last recording",true);
+                        try
+                        {
+                            ClientHandler handler = new ClientHandler("PlaybackRecording");
+                            var client = new Client(handler);
+                            handler.SetClient(client);
+
+
+                            client.Login("ec2-52-212-215-99.eu-west-1.compute.amazonaws.com", 8080, "1234", "Indy", "G", "");
+                            while (!handler.HasSentNotification() && !handler.HasError())
+                            {
+                                client.Update();
+                            }
+
+                            return MakeSkillResponse("Playing back the last recording", true);
+                        }
+                        catch (Exception e)
+                        {
+                            return MakeSkillResponse("Something has gone wrong." + e.Message, true);
+                        }
+                        
                     case "Authors":
                         return MakeSkillResponse("The saxaphone brothers Indy and Mash",true);
                 }

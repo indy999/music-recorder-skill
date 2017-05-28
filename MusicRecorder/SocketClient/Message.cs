@@ -1,17 +1,23 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
-[Serializable]
+[JsonObject]
 public class Message
 {
+    [JsonProperty]
 	public string name;
 }
 
-[Serializable]
+[JsonObject]
 public class Ping : Message {
-	public string message;
+
+    [JsonProperty]
+    public string message;
 }
 
-[Serializable]
+[JsonObject]
 public class Pong : Message {
-	public string message;
+
+    [JsonProperty]
+    public string message;
 }

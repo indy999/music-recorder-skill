@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 
 public enum OpCode{
@@ -10,50 +11,71 @@ public enum OpCode{
 	RoomFound = 4,
 	ClientLeft = 5,
 	BroadcastMessage = 6,
-	Error = 7
+	Error = 7,
+    Notification = 8
 }
 
 namespace Packets{
 	
-	[Serializable]
+    [JsonObject]
+    public class Intent
+    {
+        [JsonProperty]
+        public string name;
+    }
+
+    [JsonObject]
 	public class Login{
-		public string userId;
-		public string firstName;
-		public string lastName;
-		public string pictureUrl;
+        [JsonProperty]
+        public string userId;
+        [JsonProperty]
+        public string firstName;
+        [JsonProperty]
+        public string lastName;
+        [JsonProperty]
+        public string pictureUrl;
 	}
 
-	[Serializable]
-	public class LoginResult{
-		public bool status;
-		public string userId;
-		public string message;
+    [JsonObject]
+    public class LoginResult{
+        [JsonProperty]
+        public bool status;
+        [JsonProperty]
+        public string userId;
+        [JsonProperty]
+        public string message;
+	}
+    [JsonObject]
+    public class FindRoom{
+        [JsonProperty]
+        public string name;
+        [JsonProperty]
+        public int maxPlayers;
+	}
+    [JsonObject]
+    public class ClientInfo{
+        [JsonProperty]
+        public string userId;
+        [JsonProperty]
+        public string firstName;
+        [JsonProperty]
+        public string lastName;
+        [JsonProperty]
+        public string pictureUrl;
+	}
+    [JsonObject]
+    public class RoomFound{
+        [JsonProperty]
+        public string roomName;
+        [JsonProperty]
+        public int roomId;
+        [JsonProperty]
+        public ClientInfo[] clients;
 	}
 
-	[Serializable]
-	public class FindRoom{
-		public string name;
-		public int maxPlayers;
-	}
-
-	[Serializable]
-	public class ClientInfo{
-		public string userId;
-		public string firstName;
-		public string lastName;
-		public string pictureUrl;
-	}
-
-	[Serializable]
-	public class RoomFound{
-		public string roomName;
-		public int roomId;
-		public ClientInfo[] clients;
-	}
-
-
-	[Serializable]
-	public class Error{
-		public string message;
+    [JsonObject]
+    public class Error{
+        [JsonProperty]
+        public string message;
 	}
 }
