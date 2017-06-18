@@ -1,0 +1,1 @@
+alias upload="scp -i ~/KEYS/mash-personal-eu.pem out/artifacts/server_jar/server.jar ec2-user@ec2-52-212-215-99.eu-west-1.compute.amazonaws.com:/home/ec2-user"
